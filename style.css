@@ -124,14 +124,17 @@ main section {
   margin: 4%;
 }
 
-.card-elements button {
+.card-elements a {
   color: black;
+  background-color: white;
   box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.3);
   border-radius: 4px;
   border: 1px black solid;
   transition: all 0.5s ease;
+  padding: 2%;
+  text-align: center;
 }
-.card-elements button:hover {
+.card-elements a:hover {
   box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7);
   
 }
