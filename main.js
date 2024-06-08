@@ -60,15 +60,15 @@ function fetchAndDisplayusernameOffers() {
 
 function fetchAndDisplayBagageOffers() {
   const bagageOffersPath = ref(db, 'shop/bagageOffers');
-  get(usernameOffersPath).then((snapshot) => {
+  get(bagageOffersPath).then((snapshot) => {
     if (snapshot.exists()) {
-      const usernameOffers = snapshot.val();
-      const usernameOffersDiv = document.getElementById("usernameOffers");
-      usernameOffersDiv.innerHTML = '<h3>عروض اللقب</h3>';
-      Object.keys(usernameOffers).forEach((offerId, index) => {
-        const offer = usernameOffers[offerId];
+      const bagageOffers = snapshot.val();
+      const bagageOffersDiv = document.getElementById("usernameOffers");
+      bagageOffersDiv.innerHTML = '<h3>عروض السلع</h3>';
+      Object.keys(bagageOffers).forEach((offerId, index) => {
+        const offer = bagageOffers[offerId];
         const whatsappLinkId = `whatsapp-link-${index}`;
-        usernameOffersDiv.innerHTML += `
+        bagageOffersDiv.innerHTML += `
           <div class="offers-card">
             <div class="cover-div">
               <img src="${offer.cover}">
@@ -82,8 +82,8 @@ function fetchAndDisplayBagageOffers() {
           </div>`;
       });
       const username = localStorage.getItem('username') || 'عضو';
-      Object.keys(usernameOffers).forEach((offerId, index) => {
-        const offer = usernameOffers[offerId];
+      Object.keys(bagageOffers).forEach((offerId, index) => {
+        const offer = bagageOffers[offerId];
         const whatsappLinkId = `whatsapp-link-${index}`;
         let whatsappLink = document.getElementById(whatsappLinkId);
         const phoneNumber = '+963 992 984 704';
