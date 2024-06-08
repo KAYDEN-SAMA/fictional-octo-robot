@@ -1,0 +1,164 @@
+@import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@100..900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  direction: rtl;
+  color: #ffffff;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+  background-color: #1e1e1e;
+}
+
+body {
+  margin: 0 0 10vh;
+  font-family: "Alexandria", sans-serif;
+}
+
+header {
+  border-bottom: 1px black solid;
+  padding: 5%;
+}
+
+header h1 {
+  animation: fadeInDown 1s ease-in-out;
+}
+
+main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
+  padding: 0%;
+}
+
+main section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.header-section {
+  border-bottom: 1px black solid;
+}
+
+.header-section p {
+  margin: 4%;
+}
+
+.links-div {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.links-div a {
+  border: 1px black solid;
+  border-bottom: none;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3%;
+}
+
+.offers {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 5%;
+}
+
+.offers > * {
+  margin: 5%;
+}
+
+.offers-card {
+  width: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  border: 2px black solid;
+  border-radius: 10px;
+}
+
+.cover-div {
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-items: center;
+}
+
+.offers-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 1px black solid;
+  margin: 3%;
+  border-radius: 4%
+}
+
+.card-elements {
+  width: 50%;
+  display: flex;
+  justify-content: space-between;
+  align-items: right;
+  flex-direction: column;
+  margin: 0% 5%;
+  height: 100%;
+}
+
+.card-elements > * {
+  margin: 4%;
+}
+
+.card-elements button {
+  color: black;
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  border: 1px black solid;
+  transition: all 0.5s ease;
+}
+.card-elements button:hover {
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.7);
+  
+}
+
+footer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px black solid;
+  padding: 5%;
+}
+
+/* keyframes and media screens here 👇*/
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media screen and (max-width: 575px) {
+  main {
+    display: block;
+  }
+}
