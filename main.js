@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
 import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-database.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+import { setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAep6KK-ZCpAx8C9ckXIkmuzugXohe9jfs",
@@ -16,95 +18,333 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
 
-const path = ref(db, 'shop');
+const emailInput = document.getElementById("emailInput");
+const passwordInput = document.getElementById("passwordInput");
+const errorParagraph = document.getElementById("errorParagraph");
+const loginButton = document.getElementById("loginButton");
+const showPasswordCheckbox = document.getElementById("showPassword");
+const loginForm = document.getElementById("LoginForm");
+const dataSection = document.getElementById("dataSection");
 
-function fetchAndDisplayusernameOffers() {
-  const usernameOffersPath = ref(db, 'shop/usernameOffers');
-  get(usernameOffersPath).then((snapshot) => {
-    if (snapshot.exists()) {
-      const usernameOffers = snapshot.val();
-      const usernameOffersDiv = document.getElementById("usernameOffers");
-      usernameOffersDiv.innerHTML = '<h3>عروض اللقب</h3>';
-      Object.keys(usernameOffers).forEach((offerId, index) => {
-        const offer = usernameOffers[offerId];
-        const whatsappLinkId = `whatsapp-link-${index}`;
-        usernameOffersDiv.innerHTML += `
-          <div class="offers-card">
-            <div class="cover-div">
-              <img src="${offer.cover}">
-            </div>
-            <div class="card-elements">
-              <h4>${offer.title}</h4>
-              <p>${offer.description}</p>
-              <p>السعر: ${offer.price} <i class="fa-solid fa-star"></i></p>
-              <a id="${whatsappLinkId}" href="#" target="_blank">طلب العرض</a>
-            </div>
-          </div>`;
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginForm.style.display = "none";
+    dataSection.style.display = "block";
+    offersDropDown.style.display = "flex";
+    loadUserData(user);
+  } else {
+    loginForm.style.display = "block";
+    dataSection.style.display = "none";
+    offersDropDown.style.display = "none";
+  }
+});
+
+let selectedOffer = localStorage.getItem('selectedOffer') || "titleOffers";
+
+function loadUserData(user) {
+  const adminUid = user.uid;
+  get(ref(db, `admins/${adminUid}`)).then(adminSnapshot => {
+    if (adminSnapshot.exists()) {
+      const data = adminSnapshot.val();
+      const offersDropDown = document.getElementById('selectedOffer');
+      data.allowedOffers.forEach(offer => {
+        const option = document.createElement('option');
+        option.value = offer.trim();
+        option.textContent = offer.trim();
+        if (offer.trim() === selectedOffer) {
+          option.selected = true;
+        }
+        offersDropDown.appendChild(option);
       });
-      const username = localStorage.getItem('username') || 'عضو';
-      Object.keys(usernameOffers).forEach((offerId, index) => {
-        const offer = usernameOffers[offerId];
-        const whatsappLinkId = `whatsapp-link-${index}`;
-        let whatsappLink = document.getElementById(whatsappLinkId);
-        const phoneNumber = '+963 992 984 704';
-        const message = `مرحبا، أنا ${username} مهتم بعرض ${offer.title}`;
-        whatsappLink.href = generateWhatsAppLink(phoneNumber, message);
+      loadOfferData(selectedOffer);
+
+      offersDropDown.addEventListener('change', function() {
+        selectedOffer = this.value;
+        localStorage.setItem('selectedOffer', this.value);
+        loadOfferData(selectedOffer);
       });
-    } else {
-      usernameOffersDiv.textContent = "لا توجد أي عروض حاليا";
     }
-  }).catch((error) => {
-    console.error("Error fetching user offers: ", error);
   });
 }
 
-function fetchAndDisplayBagageOffers() {
-  const bagageOffersPath = ref(db, 'shop/bagageOffers');
-  get(bagageOffersPath).then((snapshot) => {
-    if (snapshot.exists()) {
-      const bagageOffers = snapshot.val();
-      const bagageOffersDiv = document.getElementById("usernameOffers");
-      bagageOffersDiv.innerHTML = '<h3>عروض السلع</h3>';
-      Object.keys(bagageOffers).forEach((offerId, index) => {
-        const offer = bagageOffers[offerId];
-        const whatsappLinkId = `whatsapp-link-${index}`;
-        bagageOffersDiv.innerHTML += `
-          <div class="offers-card">
-            <div class="cover-div">
-              <img src="${offer.cover}">
-            </div>
-            <div class="card-elements">
-              <h4>${offer.title}</h4>
-              <p>${offer.description}</p>
-              <p>السعر: ${offer.price} <i class="fa-solid fa-star"></i></p>
-              <a id="${whatsappLinkId}" href="#" target="_blank">طلب العرض</a>
-            </div>
-          </div>`;
+function loadOfferData(selectedOffer) {
+  const header = document.getElementById("header");
+  const addOfferDiv = document.getElementById("addOfferDiv");
+  get(ref(db, `shop/${selectedOffer}`)).then(allowedOffersSnapshot => {
+    if (allowedOffersSnapshot.exists()) {
+      dataSection.innerHTML = "";
+      addOfferDiv.innerHTML = "";
+      
+      const addOfferBtn = document.createElement('i');
+      
+      addOfferBtn.className = "fa-sharp fa-solid fa-plus";
+      addOfferBtn.id = 'addOfferBtn';
+      
+      addOfferDiv.appendChild(addOfferBtn);
+      header.appendChild(addOfferDiv);
+      
+      addOfferBtn.addEventListener('click', () => {
+        const dialog = document.createElement('div');
+        dialog.innerHTML = `<div class="dialog">
+          <label for="title">العنوان:</label>
+          <input type="text" id="title" placeholder="العنوان" maxlength="12">
+          <label for="">الوصف:</label>
+          <input type="text" id="description" placeholder="الوصف" maxlength="50">
+          <label for="price">السعر:</label>
+          <input type="number" id="price" placeholder="السعر">
+          <label for="cover">رابط الصورة:</label>
+          <input type="text" id="cover" placeholder="رابط الصورة">
+          <p id="errorElm"></p>
+          <div class="buttons-div">
+            <button id="confirmBtn">تأكيد</button>
+            <button id="cancelBtn">إلغاء</button>
+          </div>
+        </div>`;
+        document.body.appendChild(dialog);
+        document.body.classList.add('modal-open');
+        
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        confirmBtn.addEventListener('click', () => {
+          const titleInput = document.getElementById('title');
+          const descriptionInput = document.getElementById('description');
+          const priceInput = document.getElementById('price');
+          const coverSrcInput = document.getElementById('cover');
+          const errorElm = document.getElementById('errorElm');
+          
+          const title = titleInput.value.trim();
+          const description = descriptionInput.value.trim();
+          const price = priceInput.value.trim();
+          const cover = coverSrcInput.value.trim();
+          if (title === "" || description === "" || price === "" || cover === "") {
+            errorElm.textContent = "إملأ كل الحقول المطلوبة";
+          } else {
+            const newOfferRef = ref(db, `shop/${selectedOffer}/${title}`);
+            set(newOfferRef, {
+              title: title,
+              description: description,
+              price: price,
+              cover: cover
+            }).then(() => {
+              alert('تم إضافة العرض بنجاح!');
+              dialog.remove();
+              location.reload();
+            }).catch(error => {
+              alert('حصل خطأ أثناء إضافة العرض: ' + error.message);
+            });
+          }
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+          dialog.remove();
+          document.body.classList.remove('modal-open');
+        });
       });
-      const username = localStorage.getItem('username') || 'عضو';
-      Object.keys(bagageOffers).forEach((offerId, index) => {
-        const offer = bagageOffers[offerId];
-        const whatsappLinkId = `whatsapp-link-${index}`;
-        let whatsappLink = document.getElementById(whatsappLinkId);
-        const phoneNumber = '+963 992 984 704';
-        const message = `مرحبا، أنا ${username} مهتم بعرض ${offer.title}`;
-        whatsappLink.href = generateWhatsAppLink(phoneNumber, message);
+      const offersData = allowedOffersSnapshot.val();
+      const sortedOfferIds = Object.keys(offersData).sort((a, b) => {
+        const valueA = offersData[a].toString();
+        const valueB = offersData[b].toString();
+        return valueA.localeCompare(valueB, 'ar');
+      });
+      sortedOfferIds.forEach(offerId => {
+        const offerData = offersData[offerId];
+        createofferCard(offerId, offerData);
       });
     } else {
-      usernameOffersDiv.textContent = "لا توجد أي عروض حاليا";
+        addOfferDiv.innerHTML = "";
+      
+      const addOfferBtn = document.createElement('i');
+      
+      addOfferBtn.className = "fa-sharp fa-solid fa-plus";
+      addOfferBtn.id = 'addOfferBtn';
+      
+      addOfferDiv.appendChild(addOfferBtn);
+      header.appendChild(addOfferDiv);
+      
+      addOfferBtn.addEventListener('click', () => {
+        const dialog = document.createElement('div');
+        dialog.innerHTML = `<div class="dialog">
+          <label for="title">العنوان:</label>
+          <input type="text" id="title" placeholder="العنوان" maxlength="12">
+          <label for="">الوصف:</label>
+          <input type="text" id="description" placeholder="الوصف" maxlength="50">
+          <label for="price">السعر:</label>
+          <input type="number" id="price" placeholder="السعر">
+          <label for="cover">رابط الصورة:</label>
+          <input type="text" id="cover" placeholder="رابط الصورة">
+          <p id="errorElm"></p>
+          <div class="buttons-div">
+            <button id="confirmBtn">تأكيد</button>
+            <button id="cancelBtn">إلغاء</button>
+          </div>
+        </div>`;
+        document.body.appendChild(dialog);
+        document.body.classList.add('modal-open');
+        
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        confirmBtn.addEventListener('click', () => {
+          const titleInput = document.getElementById('title');
+          const descriptionInput = document.getElementById('description');
+          const priceInput = document.getElementById('price');
+          const coverSrcInput = document.getElementById('cover');
+          const errorElm = document.getElementById('errorElm');
+          
+          const title = titleInput.value.trim();
+          const description = descriptionInput.value.trim();
+          const price = priceInput.value.trim();
+          const cover = coverSrcInput.value.trim();
+          if (title === "" || description === "" || price === "" || cover === "") {
+            errorElm.textContent = "إملأ كل الحقول المطلوبة";
+          } else {
+            const newOfferRef = ref(db, `shop/${selectedOffer}/${title}`);
+            set(newOfferRef, {
+              title: title,
+              description: description,
+              price: price,
+              cover: cover
+            }).then(() => {
+              alert('تم إضافة العرض بنجاح!');
+              dialog.remove();
+              location.reload();
+            }).catch(error => {
+              alert('حصل خطأ أثناء إضافة العرض: ' + error.message);
+            });
+          }
+        });
+        
+        cancelBtn.addEventListener('click', () => {
+          dialog.remove();
+          document.body.classList.remove('modal-open');
+        });
+      });
+      const offersData = allowedOffersSnapshot.val();
+      const sortedOfferIds = Object.keys(offersData).sort((a, b) => {
+        const valueA = offersData[a].toString();
+        const valueB = offersData[b].toString();
+        return valueA.localeCompare(valueB, 'ar');
+      });
+      sortedOfferIds.forEach(offerId => {
+        const offerData = offersData[offerId];
+        createofferCard(offerId, offerData);
+      });
     }
-  }).catch((error) => {
-    console.error("Error fetching user offers: ", error);
   });
 }
 
-function generateWhatsAppLink(phoneNumber, message) {
-  let encodedMessage = encodeURIComponent(message);
-  let whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
-  return whatsappUrl;
+function createofferCard(offerId, offerData) {
+  const card = document.createElement("div");
+  const titleDiv = document.createElement("div");
+  const titleTitle = document.createElement("h3");
+  const titleEl = document.createElement("p");
+  const descriptionDiv = document.createElement("div");
+  const descriptionTitle = document.createElement("h3");
+  const descriptionEl = document.createElement("p");
+  const priceDiv = document.createElement("div");
+  const priceTitle = document.createElement("h3");
+  const priceEl = document.createElement("p");
+  const coverDiv = document.createElement("div");
+  const coverTitle = document.createElement("h3");
+  const coverEl = document.createElement("p");
+  const coverImg = document.createElement("img"); 
+  
+  const iconsDiv = document.createElement("div");
+  const deleteBtn = document.createElement("i");
+  const editBtn = document.createElement("i");
+  
+  card.className = "offer-card";
+  titleEl.className = "offer-title";
+  descriptionEl.className = "offer-description";
+  priceEl.className = "offer-price";
+  coverDiv.className = "cover-div"
+  deleteBtn.className = "fa-solid fa-trash";
+  editBtn.className = "fa-solid fa-pen";
+  
+  titleTitle.textContent = "العنوان: ";
+  titleEl.textContent = offerData.title;
+  descriptionTitle.textContent = "الوصف: ";
+  descriptionEl.textContent = offerData.description;
+  priceTitle.textContent = "السعر: ";
+  priceEl.textContent = offerData.price;
+  coverTitle.textContent =  "الصورة:";
+  coverEl.textContent = offerData.cover;
+  coverImg.src = offerData.cover;
+  
+  deleteBtn.onclick = function() {
+    if (confirm("متأكد من حذف هذا العضو؟")) {
+      const offerRef = ref(db, `shop/${selectedOffer}/${offerId}`);
+      set(offerRef, null)
+        .then(() => {
+          alert('لقد تم حذف العرض بنجاح')
+          card.remove();
+        })
+        .catch(error => {
+          alert('حصل خطأ أثناء الحذف: ', error);
+        });
+    }
+  };
+  let isEditable = false;
+  editBtn.addEventListener('click', () => {
+    if (!isEditable) {
+      titleEl.contentEditable = true;
+      descriptionEl.contentEditable = true;
+      priceEl.contentEditable = true;
+      coverEl.contentEditable = true;
+      editBtn.className = "fa-solid fa-floppy-disk";
+      isEditable = true;
+    } else {
+      set(ref(db, `shop/${selectedOffer}/${offerId}`), {
+        title: titleEl.textContent,
+        description: descriptionEl.textContent,
+        price: priceEl.textContent,
+        cover: coverEl.textContent,
+      });
+      titleEl.contentEditable = false;
+      descriptionEl.contentEditable = false;
+      priceEl.contentEditable = false;
+      coverEl.contentEditable = false;
+      editBtn.className = "fa-solid fa-pen";
+      isEditable = false;
+    }
+  });
+  titleDiv.appendChild(titleTitle);
+  titleDiv.appendChild(titleEl);
+  descriptionDiv.appendChild(descriptionTitle);
+  descriptionDiv.appendChild(descriptionEl);
+  priceDiv.appendChild(priceTitle);
+  priceDiv.appendChild(priceEl);
+  coverDiv.appendChild(coverTitle);
+  coverDiv.appendChild(coverEl)
+  coverDiv.appendChild(coverImg);
+  iconsDiv.appendChild(deleteBtn);
+  iconsDiv.appendChild(editBtn);
+  card.appendChild(titleDiv);
+  card.appendChild(descriptionDiv);
+  card.appendChild(priceDiv);
+  card.appendChild(coverDiv);
+  card.appendChild(iconsDiv);
+  dataSection.appendChild(card);
 }
 
-window.onload = () => {
-  fetchAndDisplayusernameOffers();
-  fetchAndDisplayBagageOffers();
-}
+showPasswordCheckbox.addEventListener('change', function() {
+  passwordInput.type = this.checked ? "text" : "password";
+});
+
+loginButton.addEventListener("click", async () => {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (email === "" || password === "") {
+    errorParagraph.style.display = "block";
+    errorParagraph.textContent = "أدخل البريد الإلكتروني و كلمة المرور معا!";
+    return;
+  }
+
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    errorParagraph.style.display = "block";
+    errorParagraph.textContent = error.message;
+  }
+});
