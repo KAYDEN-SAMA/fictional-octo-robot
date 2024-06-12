@@ -5,33 +5,50 @@
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Galaxy Shop</title>
+  <title>Admin For Bank</title>
   
   <!-- HTML -->
   
 
   <!-- Custom Styles -->
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
-  <header>
+  <header id="header">
     <h1>المتجر</h1>
+    <div id="addOfferDiv"></div>
   </header>
   <main>
-    <section class="header-section">
-      <p>مرحبا بك في متجر مملكة المجرة</p>
-      <div class="links-div">
-        <a href="#usernameOffers">عروض اللقب</a>
-        <a href="#bagageOffers">عروض السلع</a>
+    <section>
+      <div id="LoginForm">
+        <h2>تسجيل الدخول</h2>
+        <label for="emailInput">البريد الإلكتروني</label>
+        <input type="email" id="emailInput">
+        <label for="input">كلمة السر: </label>
+        <input id="passwordInput" type="password">
+        <p id="errorParagraph"></p>
+        <div class="checkboxDiv">
+          <div class="content">
+            <label class="checkBox">
+              <input id="showPassword" type="checkbox">
+              <div class="transition"></div>
+            </label>
+          </div>
+          <label for='showPassword'>إظهار كلمة المرور</label>
+        </div>
+        <p id="dialogueParagraph"></p>
+        <button id="loginButton">تسجيل الدخول</button>
       </div>
     </section>
-    <section>
-      <div id="usernameOffers" class="offers">
+    <section id="offersDropDown">
+      <select id="selectedOffer">
         
-      </div>
-      <div id="bagageOffers" class="offers">
-        
-      </div>
+        </select>
+    </section>
+    <section id="dataSection">
+      
     </section>
   </main>
   <footer>
@@ -39,6 +56,5 @@
   </footer>
   <!-- Project -->
   <script src="main.js" type="module"></script>
-  <script src="https://kit.fontawesome.com/24b6a00007.js" crossorigin="anonymous"></script>
 </body>
 </html>
