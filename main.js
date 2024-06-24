@@ -39,7 +39,7 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-let selectedOffer = localStorage.getItem('selectedOffer') || "titleOffers";
+let selectedOffer = localStorage.getItem('selectedOffer') || "usernameOffers";
 
 function loadUserData(user) {
   const adminUid = user.uid;
