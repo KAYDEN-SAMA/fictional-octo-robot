@@ -84,61 +84,119 @@ function loadOfferData(selectedOffer) {
       header.appendChild(addOfferDiv);
       
       addOfferBtn.addEventListener('click', () => {
-        const dialog = document.createElement('div');
-        dialog.innerHTML = `<div class="dialog">
-          <label for="title">العنوان:</label>
-          <input type="text" id="title" placeholder="العنوان" maxlength="12">
-          <label for="">الوصف:</label>
-          <input type="text" id="description" placeholder="الوصف" maxlength="50">
-          <label for="price">السعر:</label>
-          <input type="number" id="price" placeholder="السعر">
-          <label for="cover">رابط الصورة:</label>
-          <input type="text" id="cover" placeholder="رابط الصورة">
-          <p id="errorElm"></p>
-          <div class="buttons-div">
-            <button id="confirmBtn">تأكيد</button>
-            <button id="cancelBtn">إلغاء</button>
-          </div>
-        </div>`;
-        document.body.appendChild(dialog);
-        document.body.classList.add('modal-open');
-        
-        const confirmBtn = document.getElementById('confirmBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        confirmBtn.addEventListener('click', () => {
-          const titleInput = document.getElementById('title');
-          const descriptionInput = document.getElementById('description');
-          const priceInput = document.getElementById('price');
-          const coverSrcInput = document.getElementById('cover');
-          const errorElm = document.getElementById('errorElm');
-          
-          const title = titleInput.value.trim();
-          const description = descriptionInput.value.trim();
-          const price = priceInput.value.trim();
-          const cover = coverSrcInput.value.trim();
-          if (title === "" || description === "" || price === "" || cover === "") {
-            errorElm.textContent = "إملأ كل الحقول المطلوبة";
-          } else {
-            const newOfferRef = ref(db, `shop/${selectedOffer}/${title}`);
-            set(newOfferRef, {
-              title: title,
-              description: description,
-              price: price,
-              cover: cover
-            }).then(() => {
-              alert('تم إضافة العرض بنجاح!');
-              dialog.remove();
-              location.reload();
-            }).catch(error => {
-              alert('حصل خطأ أثناء إضافة العرض: ' + error.message);
-            });
-          }
-        });
-        
-        cancelBtn.addEventListener('click', () => {
-          dialog.remove();
-          document.body.classList.remove('modal-open');
-        });
+  const dialog = document.createElement('div');
+dialog.innerHTML = `<div class="dialog">
+    <label for="title">العنوان:</label>
+    <input type="text" id="title" placeholder="العنوان" maxlength="12">
+    <label for="">الوصف:</label>
+    <input type="text" id="description" placeholder="الوصف" maxlength="50">
+    <label for="price">السعر:</label>
+    <input type="number" id="price" placeholder="السعر">
+    <div class="checkboxDiv">
+    <input type="checkbox" id="multiple-choices">
+    <label>متعدد الخيارات</label>
+    </div>
+    <div id="multiple-choices-div">
+    <label for="second-price">السعر الثاني</label>
+    <input type="number" placeholder="السعر الثاني" id="second-price">
+    </div>
+    <label for="cover">رفع الصورة:</label>
+    <input type="file" id="coverInput" accept="image/*">
+    <img id="coverPreview" style="display: none; max-width: 100%;" alt="Cover Preview">
+    <p id="errorElm"></p>
+    <div class="buttons-div">
+      <button id="confirmBtn">تأكيد</button>
+      <button id="cancelBtn">إلغاء</button>
+    </div>
+  </div>`;
+document.body.appendChild(dialog);
+document.body.classList.add('modal-open');
+
+const confirmBtn = document.getElementById('confirmBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const coverInput = document.getElementById('coverInput');
+const coverPreview = document.getElementById('coverPreview');
+const errorElm = document.getElementById('errorElm');
+const multipleChoiceCheckbox = document.getElementById('multiple-choices');
+const multipleChoicesDiv = document.getElementById('multiple-choices-div');
+
+multipleChoicesDiv.style.display = "none";
+
+multipleChoiceCheckbox.addEventListener('change', () => {
+  if (multipleChoiceCheckbox.checked) {
+    multipleChoicesDiv.style.display = "flex";
+  } else {
+    multipleChoicesDiv.style.display = "none";
+  }
+});
+
+coverInput.addEventListener('change', function(event) {
+  coverPreview.style.display = "block";
+  const coverImageFile = event.target.files[0];
+  if (coverImageFile && coverImageFile.type.match('image.*')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      coverPreview.src = e.target.result;
+    };
+    reader.readAsDataURL(coverImageFile);
+  } else {
+    errorElm.textContent = "يرجى اختيار صورة للغلاف";
+    coverPreview.style.display = "none";
+  }
+});
+  confirmBtn.addEventListener('click', async () => {
+    const titleInput = document.getElementById('title');
+    const descriptionInput = document.getElementById('description');
+    const priceInput = document.getElementById('price');
+    const secondPriceInput = document.getElementById('second-price')
+
+    const title = titleInput.value.trim();
+    const description = descriptionInput.value.trim();
+    const price = priceInput.value.trim();
+    let secondPrice = secondPriceInput.value.trim();
+
+    if(secondPrice === "") {
+      secondPrice = null;
+    }
+
+    if (title === "" || description === "" || price === "") {
+      errorElm.textContent = "إملأ كل الحقول المطلوبة";
+      return;
+    }
+
+    if (!coverInput.files[0]) {
+      errorElm.textContent = "يرجى اختيار صورة للغلاف";
+      return;
+    }
+
+    try {
+      const imgbbApiKey = 'e308dc4ad9c6b000233b4d8353e2e1a3';
+      const imageUrl = await uploadImage(imgbbApiKey, coverInput.files[0]);
+      const newOfferRef = ref(db, `shop/${selectedOffer}/${title}`);
+      set(newOfferRef, {
+        title: title,
+        description: description,
+        price: price,
+        cover: imageUrl,
+        secondPrice: secondPrice
+      }).then(() => {
+        alert('تم إضافة العرض بنجاح!');
+        dialog.remove();
+        location.reload();
+      }).catch(error => {
+        alert('حصل خطأ أثناء إضافة العرض: ' + error.message);
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      errorElm.textContent = "حدث خطأ أثناء رفع الصورة";
+    }
+  });
+
+  cancelBtn.addEventListener('click', () => {
+    dialog.remove();
+    document.body.classList.remove('modal-open');
+  });
+
       });
       const offersData = allowedOffersSnapshot.val();
       const sortedOfferIds = Object.keys(offersData).sort((a, b) => {
@@ -161,63 +219,7 @@ function loadOfferData(selectedOffer) {
       addOfferDiv.appendChild(addOfferBtn);
       header.appendChild(addOfferDiv);
       
-      addOfferBtn.addEventListener('click', () => {
-        const dialog = document.createElement('div');
-        dialog.innerHTML = `<div class="dialog">
-          <label for="title">العنوان:</label>
-          <input type="text" id="title" placeholder="العنوان" maxlength="12">
-          <label for="">الوصف:</label>
-          <input type="text" id="description" placeholder="الوصف" maxlength="50">
-          <label for="price">السعر:</label>
-          <input type="number" id="price" placeholder="السعر">
-          <label for="cover">رابط الصورة:</label>
-          <input type="text" id="cover" placeholder="رابط الصورة">
-          <p id="errorElm"></p>
-          <div class="buttons-div">
-            <button id="confirmBtn">تأكيد</button>
-            <button id="cancelBtn">إلغاء</button>
-          </div>
-        </div>`;
-        document.body.appendChild(dialog);
-        document.body.classList.add('modal-open');
-        
-        const confirmBtn = document.getElementById('confirmBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        confirmBtn.addEventListener('click', () => {
-          const titleInput = document.getElementById('title');
-          const descriptionInput = document.getElementById('description');
-          const priceInput = document.getElementById('price');
-          const coverSrcInput = document.getElementById('cover');
-          const errorElm = document.getElementById('errorElm');
-          
-          const title = titleInput.value.trim();
-          const description = descriptionInput.value.trim();
-          const price = priceInput.value.trim();
-          const cover = coverSrcInput.value.trim();
-          if (title === "" || description === "" || price === "" || cover === "") {
-            errorElm.textContent = "إملأ كل الحقول المطلوبة";
-          } else {
-            const newOfferRef = ref(db, `shop/${selectedOffer}/${title}`);
-            set(newOfferRef, {
-              title: title,
-              description: description,
-              price: price,
-              cover: cover
-            }).then(() => {
-              alert('تم إضافة العرض بنجاح!');
-              dialog.remove();
-              location.reload();
-            }).catch(error => {
-              alert('حصل خطأ أثناء إضافة العرض: ' + error.message);
-            });
-          }
-        });
-        
-        cancelBtn.addEventListener('click', () => {
-          dialog.remove();
-          document.body.classList.remove('modal-open');
-        });
-      });
+      addOfferBtn.addEventListener('click', addNewOffer());
       const offersData = allowedOffersSnapshot.val();
       const sortedOfferIds = Object.keys(offersData).sort((a, b) => {
         const valueA = offersData[a].toString();
@@ -232,6 +234,26 @@ function loadOfferData(selectedOffer) {
   });
 }
 
+async function uploadImage(apiKey, imageFile) {
+  const imgbbApiUrl = 'https://api.imgbb.com/1/upload';
+  const formData = new FormData();
+  formData.append('key', apiKey);
+  formData.append('image', imageFile);
+
+  const response = await fetch(imgbbApiUrl, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const json = await response.json();
+  if (json.success) {
+    return json.data.url;
+  } else {
+    throw new Error('Image upload failed');
+  }
+}
+
+
 function createofferCard(offerId, offerData) {
   const card = document.createElement("div");
   const titleDiv = document.createElement("div");
@@ -243,6 +265,10 @@ function createofferCard(offerId, offerData) {
   const priceDiv = document.createElement("div");
   const priceTitle = document.createElement("h3");
   const priceEl = document.createElement("p");
+  let priceEl2;
+  const priceDiv2 = document.createElement('div');
+  
+  
   const coverDiv = document.createElement("div");
   const coverTitle = document.createElement("h3");
   const coverEl = document.createElement("p");
@@ -264,14 +290,29 @@ function createofferCard(offerId, offerData) {
   titleEl.textContent = offerData.title;
   descriptionTitle.textContent = "الوصف: ";
   descriptionEl.textContent = offerData.description;
+  
+  
   priceTitle.textContent = "السعر: ";
   priceEl.textContent = offerData.price;
+  
+  if (offerData.hasOwnProperty('secondPrice')) {
+    const priceTitle2 = document.createElement("h3");
+    priceEl2 = document.createElement("p");
+    
+    priceTitle2.textContent = "السعر الثاني: "
+    priceEl2.textContent = offerData.secondPrice;
+    
+    priceDiv2.appendChild(priceTitle2);
+    priceDiv2.appendChild(priceEl2);
+  }
+  
+  
   coverTitle.textContent =  "الصورة:";
   coverEl.textContent = offerData.cover;
   coverImg.src = offerData.cover;
   
   deleteBtn.onclick = function() {
-    if (confirm("متأكد من حذف هذا العضو؟")) {
+    if (confirm("متأكد من حذف هذا العرض؟")) {
       const offerRef = ref(db, `shop/${selectedOffer}/${offerId}`);
       set(offerRef, null)
         .then(() => {
@@ -285,6 +326,7 @@ function createofferCard(offerId, offerData) {
   };
   let isEditable = false;
   editBtn.addEventListener('click', () => {
+    let secondPriceValue;
     if (!isEditable) {
       titleEl.contentEditable = true;
       descriptionEl.contentEditable = true;
@@ -292,11 +334,21 @@ function createofferCard(offerId, offerData) {
       coverEl.contentEditable = true;
       editBtn.className = "fa-solid fa-floppy-disk";
       isEditable = true;
+      if(priceEl2) {
+        priceEl2.contentEditable = true;
+      }
     } else {
+      const priceValue = parseFloat(priceEl.textContent);
+      if(priceEl2){
+        secondPriceValue = parseFloat(priceEl2.textContent);
+      } else {
+        secondPriceValue = null;
+      }
       set(ref(db, `shop/${selectedOffer}/${offerId}`), {
         title: titleEl.textContent,
         description: descriptionEl.textContent,
-        price: priceEl.textContent,
+        price: priceValue,
+        secondPrice: secondPriceValue,
         cover: coverEl.textContent,
       });
       titleEl.contentEditable = false;
@@ -305,6 +357,9 @@ function createofferCard(offerId, offerData) {
       coverEl.contentEditable = false;
       editBtn.className = "fa-solid fa-pen";
       isEditable = false;
+      if (priceEl2) {
+        priceEl2.contentEditable = false;
+      }
     }
   });
   titleDiv.appendChild(titleTitle);
@@ -321,6 +376,7 @@ function createofferCard(offerId, offerData) {
   card.appendChild(titleDiv);
   card.appendChild(descriptionDiv);
   card.appendChild(priceDiv);
+  card.appendChild(priceDiv2)
   card.appendChild(coverDiv);
   card.appendChild(iconsDiv);
   dataSection.appendChild(card);
