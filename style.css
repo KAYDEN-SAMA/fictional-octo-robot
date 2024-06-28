@@ -278,6 +278,13 @@ i:hover {
   overflow: hidden;
 }
 
+.dialog img {
+  width: 60%;
+  margin: 0 auto;
+  border: 1px black solid;
+  border-radius: 5px;
+}
+
 #confirmBtn {
   background-color: #28a745;
   color: #f8f8f8;
