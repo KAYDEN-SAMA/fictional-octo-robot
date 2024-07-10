@@ -87,7 +87,7 @@ function loadOfferData(selectedOffer) {
   const dialog = document.createElement('div');
 dialog.innerHTML = `<div class="dialog">
     <label for="title">العنوان:</label>
-    <input type="text" id="title" placeholder="العنوان" maxlength="12">
+    <input type="text" id="title" placeholder="العنوان" maxlength="24">
     <label for="">الوصف:</label>
     <input type="text" id="description" placeholder="الوصف" maxlength="50">
     <label for="price">السعر:</label>
